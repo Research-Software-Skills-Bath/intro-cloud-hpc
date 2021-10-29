@@ -13100,6 +13100,17 @@ div#notebook {
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
+<p>Below are example submission scripts for several different codes.</p>
+<p>These examples copy the run data from the submission directory in <code style="background-color:#F7F7F7;border:1px solid #CFCFCF">/campaign/</code> area to <code style="background-color:#F7F7F7;border:1px solid #CFCFCF">/scratch/</code> before the run, and copy any files back to <code style="background-color:#F7F7F7;border:1px solid #CFCFCF">/campaign/</code> afterwards. The script then cleans up by removing the <code style="background-color:#F7F7F7;border:1px solid #CFCFCF">working_directory</code> in the <code style="background-color:#F7F7F7;border:1px solid #CFCFCF">/scratch/</code> area.</p>
+<p>Obviously there are an infinite number of ways to structure the logic in your submission scripts in order to handle the data transfer between <code style="background-color:#F7F7F7;border:1px solid #CFCFCF">/campaign/</code> and <code style="background-color:#F7F7F7;border:1px solid #CFCFCF">/scratch/</code>.</p>
+<p>The following examples can be adapted to your own needs. They should be submitted from the <code style="background-color:#F7F7F7;border:1px solid #CFCFCF">/campaign/</code> storage area, they will create a temporary working directory <code style="background-color:#F7F7F7;border:1px solid #CFCFCF">/scratch/$USER/$SLURM_JOB_ID</code> and copy the contents of the submission folder over to the working directory. After the run it copies the contents of the working directory in <code style="background-color:#F7F7F7;border:1px solid #CFCFCF">scratch</code> back to the submission directory in <code style="background-color:#F7F7F7;border:1px solid #CFCFCF">/campaign/</code>. It then cleans up the scratch working directory.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
 <h2 id="Openfoam">Openfoam<a class="anchor-link" href="#Openfoam">&#182;</a></h2><p>We will run an example job using the OpenFoam 7 module for</p>
 <p><code style="background-color:#F7F7F7;border:1px solid #CFCFCF">OpenFoam_hbv3/gcc_9.2.0/openmpi_4.1.0/v7</code></p>
 
@@ -13135,14 +13146,40 @@ div#notebook {
 <span class="c1">#SBATCH --output=AMD.%j.o</span>
 <span class="c1">#SBATCH --error=AMD.%j.e</span>
 <span class="c1">#SBATCH --nodes=1</span>
-<span class="c1">#SBATCH --ntasks-per-node=16</span>
-<span class="c1">#SBATCH --partition=spot-hbv3-16</span>
+<span class="c1">#SBATCH --ntasks-per-node=120</span>
+<span class="c1">#SBATCH --partition=spot-hbv3-120</span>
+<span class="c1">#SBATCH --qos=spot-hbv3-120</span>
 <span class="c1">#SBATCH --time=04:00:00</span>
 
 module purge
 module load OpenFoam_hbv3/gcc_9.2.0/openmpi_4.1.0/v7
-. <span class="nv">$foamDotFile</span>
-./Allrun
+
+<span class="c1"># As an example of moving input data from /campaign</span>
+<span class="c1"># to scratch we will create and mirror the submit</span>
+<span class="c1"># directory structure on scratch:</span>
+
+<span class="nv">campaigndir</span><span class="o">=</span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>
+<span class="nv">workdir</span><span class="o">=</span><span class="nv">$SCRATCH</span>/<span class="nv">$SLURM_JOB_ID</span>
+mkdir -p <span class="nv">$workdir</span>
+
+<span class="nb">echo</span> <span class="nv">$campaigndir</span> <span class="p">|</span> <span class="k">if</span> grep -q campaign<span class="p">;</span> <span class="k">then</span> 
+    <span class="c1"># Copy any inputs required to the work directory:</span>
+    cp -r <span class="nv">$campaigndir</span>/* <span class="nv">$workdir</span>/<span class="p">;</span>
+    <span class="nb">cd</span> <span class="nv">$workdir</span><span class="p">;</span>
+    <span class="nb">echo</span>  <span class="s2">&quot;Work directory&quot;</span> <span class="nv">$workdir</span> <span class="p">;</span>
+
+    <span class="c1"># source the foamDotFile and do the run</span>
+    . <span class="nv">$foamDotFile</span>
+    ./Allrun
+
+    <span class="c1"># Copy back results.</span>
+    srun cp -Rf <span class="nv">$workdir</span>/*  <span class="nv">$campaigndir</span>/
+    <span class="c1">#Clean up scratch</span>
+    rm -rf <span class="nv">$workdir</span>
+<span class="k">else</span>
+     <span class="nb">echo</span> <span class="s2">&quot;Not submitting from campaign. Check your submission script.&quot;</span>
+     <span class="nb">exit</span> <span class="m">1</span><span class="p">;</span>
+<span class="k">fi</span>
 </pre></div>
 
 </div>
@@ -13164,16 +13201,16 @@ module load OpenFoam_hbv3/gcc_9.2.0/openmpi_4.1.0/v7
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="ANSYS">ANSYS<a class="anchor-link" href="#ANSYS">&#182;</a></h2><div class="highlight"><pre><span></span><span class="ch">#!/bin/bash</span>
+<h2 id="ANSYS">ANSYS<a class="anchor-link" href="#ANSYS">&#182;</a></h2><p>Below is an example script for an Ansys run, which should be submitted from the <code style="background-color:#F7F7F7;border:1px solid #CFCFCF">/campaign/</code> storage area.</p>
+<div class="highlight"><pre><span></span><span class="ch">#!/bin/bash</span>
 <span class="c1">#SBATCH --job-name=Free_Surf</span>
 <span class="c1">#SBATCH --account=sysadmin</span>
-<span class="c1">#SBATCH --partition=spot-hc-44</span>
+<span class="c1">#SBATCH --partition=spot-fsv2-32</span>
+<span class="c1">#SBATCH --qos=spot-fsv2-32</span>
 <span class="c1">#SBATCH --time=2:00:00</span>
 <span class="c1">#SBATCH --nodes=1</span>
-<span class="c1">#SBATCH --tasks-per-node=44</span>
+<span class="c1">#SBATCH --tasks-per-node=32</span>
 
-<span class="c1">## Match the number of licenses to the cores requested</span>
-<span class="c1">#SBATCH --licenses=cfd_solve_level1@ansyslm:1,cfd_solve_level2@ansyslm:1,cfd_base@ansyslm:1</span>
 
 env <span class="p">|</span> grep SLURM <span class="p">|</span> sort -d
 <span class="nb">echo</span>
@@ -13184,20 +13221,42 @@ env <span class="p">|</span> grep SLURM <span class="p">|</span> sort -d
 module load ansys/v212
 module list
 
-<span class="c1">## Define files</span>
-<span class="nb">export</span> <span class="nv">DEFFILE</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">CASE</span><span class="si">}</span><span class="s2">.def&quot;</span>
+<span class="c1"># As an example of moving input data from /campaign</span>
+<span class="c1"># to scratch we will create and mirror the submit</span>
+<span class="c1"># directory structure on scratch:</span>
 
-<span class="c1">## Define additional options</span>
-<span class="nv">OPTIONS</span><span class="o">=</span><span class="s2">&quot;-double -batch&quot;</span>
+<span class="nv">campaigndir</span><span class="o">=</span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>
+<span class="nv">workdir</span><span class="o">=</span><span class="nv">$SCRATCH</span>/<span class="nv">$SLURM_JOB_ID</span>
+mkdir -p <span class="nv">$workdir</span>
 
-<span class="nv">CFX_PARALLEL</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$CFX_BATCH_MODE</span><span class="s2"> </span><span class="nv">$CFX_CCL_FILE</span><span class="s2"> </span><span class="nv">$CFX_START_METHOD</span><span class="s2"> </span><span class="nv">$CFX_PARTITION</span><span class="s2"> </span><span class="nv">$CFX_PARTITIONER</span><span class="s2">&quot;</span>
+<span class="nb">echo</span> <span class="nv">$campaigndir</span> <span class="p">|</span> <span class="k">if</span> grep -q campagin<span class="p">;</span> <span class="k">then</span> 
+    <span class="c1"># Copy any inputs required to the work directory:</span>
+    cp -r <span class="nv">$campaigndir</span>/* <span class="nv">$workdir</span>/
+    <span class="nb">cd</span> <span class="nv">$workdir</span>
+    <span class="nb">echo</span>  <span class="s2">&quot;Work directory&quot;</span> <span class="nv">$workdir</span> <span class="p">;</span>
+    <span class="c1">## Define files</span>
+    <span class="nb">export</span> <span class="nv">DEFFILE</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">CASE</span><span class="si">}</span><span class="s2">.def&quot;</span>
 
-<span class="nv">HOSTS</span><span class="o">=</span><span class="k">$(</span>srun --ntasks-per-node <span class="nv">$SLURM_CPUS_ON_NODE</span> hostname <span class="p">|</span> sort <span class="p">|</span> uniq -c <span class="p">|</span> awk <span class="s1">&#39;{print $2 &quot;*&quot; $1}&#39;</span> <span class="p">|</span> paste -sd, -<span class="k">)</span>
-<span class="nb">echo</span> <span class="s2">&quot;HOSTS: </span><span class="nv">$HOSTS</span><span class="s2">&quot;</span>
-<span class="nb">echo</span> <span class="s2">&quot;&quot;</span>
+    <span class="c1">## Define additional options</span>
+    <span class="nv">OPTIONS</span><span class="o">=</span><span class="s2">&quot;-double -batch&quot;</span>
 
-<span class="c1"># Run CFX5SOLVE</span>
-cfx5solve -def Free_Surf.def <span class="si">${</span><span class="nv">OPTIONS</span><span class="si">}</span> -start-method <span class="s1">&#39;Intel MPI Distributed Parallel&#39;</span> -par-dist <span class="nv">$HOSTS</span> -partitioner <span class="si">${</span><span class="nv">CFXPARTITIONER</span><span class="si">}</span>
+    <span class="nv">CFX_PARALLEL</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$CFX_BATCH_MODE</span><span class="s2"> </span><span class="nv">$CFX_CCL_FILE</span><span class="s2"> </span><span class="nv">$CFX_START_METHOD</span><span class="s2"> </span><span class="nv">$CFX_PARTITION</span><span class="s2"> </span><span class="nv">$CFX_PARTITIONER</span><span class="s2">&quot;</span>
+
+    <span class="nv">HOSTS</span><span class="o">=</span><span class="k">$(</span>srun --ntasks-per-node <span class="nv">$SLURM_CPUS_ON_NODE</span> hostname <span class="p">|</span> sort <span class="p">|</span> uniq -c <span class="p">|</span> awk <span class="s1">&#39;{print $2 &quot;*&quot; $1}&#39;</span> <span class="p">|</span> paste -sd, -<span class="k">)</span>
+    <span class="nb">echo</span> <span class="s2">&quot;HOSTS: </span><span class="nv">$HOSTS</span><span class="s2">&quot;</span>
+    <span class="nb">echo</span> <span class="s2">&quot;&quot;</span>
+
+    <span class="c1"># Run CFX5SOLVE</span>
+        cfx5solve -def Free_Surf.def <span class="si">${</span><span class="nv">OPTIONS</span><span class="si">}</span> -start-method <span class="s1">&#39;Intel MPI Distributed Parallel&#39;</span> -par-dist <span class="nv">$HOSTS</span> -partitioner <span class="si">${</span><span class="nv">CFXPARTITIONER</span><span class="si">}</span>
+
+    <span class="c1"># Copy back results.</span>
+    srun cp -Rf <span class="nv">$workdir</span>/*  <span class="nv">$campaigndir</span>/
+    <span class="c1">#Clean up scratch</span>
+    rm -rf <span class="nv">$workdir</span>
+<span class="k">else</span>
+    <span class="nb">echo</span> <span class="s2">&quot;Not submitting from campaign. Check your submission script.&quot;</span>
+    <span class="nb">exit</span> <span class="m">1</span><span class="p">;</span>
+<span class="k">fi</span>
 </pre></div>
 
 </div>
@@ -13209,7 +13268,8 @@ cfx5solve -def Free_Surf.def <span class="si">${</span><span class="nv">OPTIONS<
 <h3 id="Matlab">Matlab<a class="anchor-link" href="#Matlab">&#182;</a></h3><p>A hello world matlab script 'hello_world.m':</p>
 <div class="highlight"><pre><span></span><span class="nb">disp</span><span class="p">(</span><span class="s">&#39;Hello, World&#39;</span><span class="p">);</span><span class="w"></span>
 </pre></div>
-<p>An example run-script for a matlab job:</p>
+<p>An example run-script for a matlab job, which 
+can be submitted from /campaign:</p>
 <div class="highlight"><pre><span></span><span class="ch">#!/bin/bash</span>
 <span class="c1"># Account to charge to</span>
 <span class="c1">#SBATCH --account=prj4_phase1</span>
@@ -13220,15 +13280,42 @@ cfx5solve -def Free_Surf.def <span class="si">${</span><span class="nv">OPTIONS<
 <span class="c1"># Number of nodes requested</span>
 <span class="c1">#SBATCH --nodes=1</span>
 <span class="c1"># The no of tasks per node</span>
-<span class="c1">#SBATCH --ntasks-per-node=44</span>
+<span class="c1">#SBATCH --ntasks-per-node=32</span>
 <span class="c1"># The partition to submit to</span>
-<span class="c1">#SBATCH --partition=spot-hc-44</span>
+<span class="c1">#SBATCH --partition=spot-fsv2-32</span>
+<span class="c1"># The quality of service</span>
+<span class="c1">#SBATCH --qos=spot-fsv2-32</span>
 <span class="c1"># The runtime</span>
 <span class="c1">#SBATCH --time=04:00:00</span>
 
+
+<span class="c1"># Purge modules and load matlab</span>
 module purge
 module load matlab/2020b
-matlab -nosplash -nodisplay -r <span class="s2">&quot;hello_world; exit&quot;</span>
+
+<span class="c1"># As an example of moving input data from /campaign</span>
+<span class="c1"># to scratch we will create and mirror the submit</span>
+<span class="c1"># directory structure on scratch:</span>
+
+<span class="nv">campaigndir</span><span class="o">=</span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>
+<span class="nv">workdir</span><span class="o">=</span><span class="nv">$SCRATCH</span>/<span class="nv">$SLURM_JOB_ID</span>
+mkdir -p <span class="nv">$workdir</span>
+
+<span class="nb">echo</span> <span class="nv">$campaigndir</span> <span class="p">|</span> <span class="k">if</span> grep -q campaign<span class="p">;</span> <span class="k">then</span> 
+    <span class="c1"># Copy any inputs required to the work directory:</span>
+    cp -r <span class="nv">$campaigndir</span>/* <span class="nv">$workdir</span>/<span class="p">;</span>
+    <span class="nb">cd</span> <span class="nv">$workdir</span><span class="p">;</span>
+    <span class="nb">echo</span>  <span class="s2">&quot;Work directory&quot;</span> <span class="nv">$workdir</span> <span class="p">;</span>
+    matlab -nosplash -nodisplay -r <span class="s2">&quot;hello_world; exit&quot;</span>
+
+    <span class="c1"># Copy back results.</span>
+    srun cp -Rf <span class="nv">$workdir</span>/*  <span class="nv">$campaigndir</span>/
+    <span class="c1">#Clean up scratch</span>
+    rm -rf <span class="nv">$workdir</span>
+<span class="k">else</span>
+    <span class="nb">echo</span> <span class="s2">&quot;Not submitting from campaign. Check your submission script.&quot;</span>
+    <span class="nb">exit</span> <span class="m">1</span><span class="p">;</span>
+<span class="k">fi</span>
 </pre></div>
 
 </div>
