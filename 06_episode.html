@@ -13142,9 +13142,9 @@ div#notebook {
 <p>An example run script:</p>
 <div class="highlight"><pre><span></span><span class="ch">#!/bin/bash</span>
 <span class="c1">#SBATCH --account=prj3_phase1</span>
-<span class="c1">#SBATCH --job-name=AMD</span>
-<span class="c1">#SBATCH --output=AMD.%j.o</span>
-<span class="c1">#SBATCH --error=AMD.%j.e</span>
+<span class="c1">#SBATCH --job-name=JOB_NAME</span>
+<span class="c1">#SBATCH --output=JOB_NAME.%j.o</span>
+<span class="c1">#SBATCH --error=JOB_NAME.%j.e</span>
 <span class="c1">#SBATCH --nodes=1</span>
 <span class="c1">#SBATCH --ntasks-per-node=120</span>
 <span class="c1">#SBATCH --partition=spot-hbv3-120</span>
@@ -13164,7 +13164,9 @@ mkdir -p <span class="nv">$workdir</span>
 
 <span class="nb">echo</span> <span class="nv">$campaigndir</span> <span class="p">|</span> <span class="k">if</span> grep -q campaign<span class="p">;</span> <span class="k">then</span> 
     <span class="c1"># Copy any inputs required to the work directory:</span>
-    cp -r <span class="nv">$campaigndir</span>/* <span class="nv">$workdir</span>/<span class="p">;</span>
+    <span class="c1"># excluding and files with a JOB_NAME prefix, so your</span>
+    <span class="c1"># output and error files don&#39;t get over written on the copy back</span>
+    rsync -aP --exclude<span class="o">=</span>JOB_NAME.* <span class="nv">$campaigndir</span>/* <span class="nv">$workdir</span>/
     <span class="nb">cd</span> <span class="nv">$workdir</span><span class="p">;</span>
     <span class="nb">echo</span>  <span class="s2">&quot;Work directory&quot;</span> <span class="nv">$workdir</span> <span class="p">;</span>
 
@@ -13231,8 +13233,9 @@ mkdir -p <span class="nv">$workdir</span>
 
 <span class="nb">echo</span> <span class="nv">$campaigndir</span> <span class="p">|</span> <span class="k">if</span> grep -q campagin<span class="p">;</span> <span class="k">then</span> 
     <span class="c1"># Copy any inputs required to the work directory:</span>
-    cp -r <span class="nv">$campaigndir</span>/* <span class="nv">$workdir</span>/
-    <span class="nb">cd</span> <span class="nv">$workdir</span>
+    <span class="c1"># excluding and files with a JOB_NAME prefix, so your</span>
+    <span class="c1"># output and error files don&#39;t get over written on the copy back</span>
+    rsync -aP --exclude<span class="o">=</span>JOB_NAME.* <span class="nv">$campaigndir</span>/* <span class="nv">$workdir</span>/
     <span class="nb">echo</span>  <span class="s2">&quot;Work directory&quot;</span> <span class="nv">$workdir</span> <span class="p">;</span>
     <span class="c1">## Define files</span>
     <span class="nb">export</span> <span class="nv">DEFFILE</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">CASE</span><span class="si">}</span><span class="s2">.def&quot;</span>
@@ -13303,8 +13306,9 @@ mkdir -p <span class="nv">$workdir</span>
 
 <span class="nb">echo</span> <span class="nv">$campaigndir</span> <span class="p">|</span> <span class="k">if</span> grep -q campaign<span class="p">;</span> <span class="k">then</span> 
     <span class="c1"># Copy any inputs required to the work directory:</span>
-    cp -r <span class="nv">$campaigndir</span>/* <span class="nv">$workdir</span>/<span class="p">;</span>
-    <span class="nb">cd</span> <span class="nv">$workdir</span><span class="p">;</span>
+    <span class="c1"># excluding and files with a JOB_NAME prefix, so your</span>
+    <span class="c1"># output and error files don&#39;t get over written on the copy back</span>
+    rsync -aP --exclude<span class="o">=</span>JOB_NAME.* <span class="nv">$campaigndir</span>/* <span class="nv">$workdir</span>/
     <span class="nb">echo</span>  <span class="s2">&quot;Work directory&quot;</span> <span class="nv">$workdir</span> <span class="p">;</span>
     matlab -nosplash -nodisplay -r <span class="s2">&quot;hello_world; exit&quot;</span>
 
