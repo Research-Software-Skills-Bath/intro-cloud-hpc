@@ -13167,8 +13167,44 @@ gcc provides the standard serial gnu compiler suite, openmpi is the contains the
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>The software modules will be updated as we build, test and broaden the software stack.</p>
-<p>The modules are seperated by the instance type where appropriate, and the general modules can be used any instance</p>
+<p>The software modules will be updated as we build, test and broaden the software stack. Different modules are available depending on the instance type you wish to use. A combined list of all available modules built on the system is presented on the log-in node.</p>
+<p>Any module in</p>
+<table>
+<thead><tr>
+<th>File path</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>/usr/share/Modules/modulefiles</td>
+</tr>
+<tr>
+<td>/apps/x86_64/modules/all</td>
+</tr>
+<tr>
+<td>/apps/modulefiles</td>
+</tr>
+</tbody>
+</table>
+<p>are available and can be used on all instances.</p>
+<p>However the modules in</p>
+<p><code style="background-color:#F7F7F7;border:1px solid #CFCFCF">/apps/modules/</code></p>
+<p>are seperated out by build toolchain and are built for a specific instance. You can check if these modules are available on the instance of your choice with the following command:</p>
+<p><code style="background-color:#F7F7F7;border:1px solid #CFCFCF">module check [instance_type] [module_name]</code></p>
+<p>where <code style="background-color:#F7F7F7;border:1px solid #CFCFCF">[instance_type]</code> and <code style="background-color:#F7F7F7;border:1px solid #CFCFCF">[module_name]</code> are the instance name and module you wish to check, e.g.:</p>
+
+<pre><code style="">$ module check fsv2 OpenFOAM
+ The following potential matches are available on the fsv2 instance:
+ match: OpenFOAM/v1812-foss-2020a
+ match: OpenFOAM/v2012-foss-2020a
+ match: OpenFOAM/9-foss-2021a
+ To load one of them include: `module load [module name]` in your run script e.g.:
+ module load OpenFOAM/v1812-foss-2020a</code></pre>
+<p>The <code style="background-color:#F7F7F7;border:1px solid #CFCFCF">[module_name]</code> you pass to this comand doesn't have to be exact (but the closer the argument you pass to the command is to the actual module name the better), and it will present you with a list of potential matches for the instance you are interested in. These modules cannot be loaded and used on the login-node, and rather should be included in your run-script e.g.:</p>
+
+<pre><code style="">module purge
+module load OpenFOAM/v1812-foss-2020a</code></pre>
+<p>There are also instance specific modules in the following directories (although these will be removed shortly and replaced with modules in <code style="background-color:#F7F7F7;border:1px solid #CFCFCF">/apps/modules</code>).</p>
 <table>
 <thead><tr>
 <th>Section</th>
@@ -13178,23 +13214,19 @@ gcc provides the standard serial gnu compiler suite, openmpi is the contains the
 <tbody>
 <tr>
 <td>/apps/hc/modulefiles</td>
-<td>Applications and libraries build for the hc instance</td>
+<td>Applications and libraries built for the hc instance</td>
 </tr>
 <tr>
 <td>/apps/hbv3/modulefiles</td>
-<td>Applications and libraries build for the hbv3 instance</td>
+<td>Applications and libraries built for the hbv3 instance</td>
 </tr>
 <tr>
 <td>/apps/hbv2/modulefiles</td>
-<td>Applications and libraries build for the hbv2 instance</td>
+<td>Applications and libraries built for the hbv2 instance</td>
 </tr>
 <tr>
-<td>/usr/share/Modules/modulefiles</td>
-<td>Compilers, MPI &amp; Intel Libraries</td>
-</tr>
-<tr>
-<td>/apps/modulefiles</td>
-<td>General applications for any instance</td>
+<td>/apps/fsv2/modulefiles</td>
+<td>Applications and libraries built for the fsv2 instance</td>
 </tr>
 </tbody>
 </table>
