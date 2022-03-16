@@ -13327,6 +13327,17 @@ mkdir -p <span class="nv">$workdir</span>
 </div>
 </div>
 </div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Interactive-job">Interactive job<a class="anchor-link" href="#Interactive-job">&#182;</a></h3><p>It is also possible to obtain a compute node and work interactively.</p>
+<p>Issuing the following command in the terminal will request a spot-hbv3-120 compute instance for 6 hours:</p>
+
+<pre><code style="">srun --partition spot-hbv3-120 --nodes 1  --account prj4_phase1  --qos prj4_phase1 --job-name "interactive" --cpus-per-task 120 --time 6:00:00 --pty bash</code></pre>
+
+</div>
+</div>
+</div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
 <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
